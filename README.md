@@ -21,7 +21,7 @@ A scalable **URL Shortener** built with Kubernetes (K8s), Docker, Flask, and Red
 - Python 3.9+ (for running the Flask app)  
 
 ---
-##Project Structure
+## Project Structure
 app.py              # Flask application
 Dockerfile          # Docker build configuration
 docker-compose.yml  # Local development setup
@@ -33,6 +33,9 @@ kubernetes/
 ├── services/       # Kubernetes Services
 ├── ingress/        # Ingress configuration
 └── hpa/            # Horizontal Pod Autoscaler config
+
+---
+
 ## Quick Start  
 
 ### 1. Start Minikube & Build Docker Image
