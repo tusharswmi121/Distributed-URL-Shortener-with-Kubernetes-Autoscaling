@@ -22,19 +22,21 @@ A scalable **URL Shortener** built with Kubernetes (K8s), Docker, Flask, and Red
 
 ---
 ## Project Structure
-app.py              # Flask application
-Dockerfile          # Docker build configuration
-docker-compose.yml  # Local development setup
-stress_test.py      # Load testing script
-requirements.txt    # Python dependencies
-kubernetes/
-├── configs/        # ConfigMaps and Secrets
-├── deployments/    # Kubernetes Deployments
-├── services/       # Kubernetes Services
-├── ingress/        # Ingress configuration
-└── hpa/            # Horizontal Pod Autoscaler config
 
----
+```bash
+
+├── app.py                 # Flask application
+├── Dockerfile             # Docker build configuration
+├── docker-compose.yml     # Local development setup
+├── stress_test.py         # Load testing script
+├── requirements.txt       # Python dependencies
+└── kubernetes/
+    ├── configs/           # ConfigMaps and Secrets
+    ├── deployments/       # Kubernetes Deployments
+    ├── services/          # Kubernetes Services
+    ├── ingress/           # Ingress configuration
+    └── hpa/               # Horizontal Pod Autoscaler config
+```
 
 ## Quick Start  
 
