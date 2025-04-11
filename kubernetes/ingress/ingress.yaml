@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: url-shortener-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/load-balance: "round_robin"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "POST, GET, OPTIONS"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: short.ly
+    http:
+      paths:
+      - path: /shorten
+        pathType: Exact  # Critical for POST requests
+        backend:
+          service:
+            name: web-service
+            port:
+              number: 80
+      - path: /([a-zA-Z0-9]+)
+        pathType: Prefix  # For short code redirects
+        backend:
+          service:
+            name: web-service
+            port:
+              number: 80

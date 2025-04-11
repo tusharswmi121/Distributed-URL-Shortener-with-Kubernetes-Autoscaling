@@ -1,0 +1,9 @@
+# kubernetes/configs/config-map.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  FLASK_ENV: production
+  REDIS_HOST: redis-service
+  REDIS_PORT: "6379"
