@@ -1,25 +1,18 @@
-// server.js (Express version)
+// server.js — SHA-256 based short codes (deterministic)
 import express from 'express';
 import Redis from 'ioredis';
 import crypto from 'crypto';
 
 const app = express();
 
-const BASE_DOMAIN = 'short.ly';
+const BASE_DOMAIN = 'short.ly';                         // shown in responses
 const REDIS_HOST = process.env.REDIS_HOST || 'redis-service';
 const REDIS_PORT = Number(process.env.REDIS_PORT || 6379);
-const TTL_SECONDS = 86400; // 24h
+const TTL_SECONDS = 86400;                              // 24h
 
-// Body parser for JSON
 app.use(express.json());
 
-// Simple request logger (optional)
-app.use((req, _res, next) => {
-  console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
-  next();
-});
-
-// CORS (match previous behavior)
+// Simple CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
@@ -28,13 +21,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Robust Redis client with short retry backoff
+// Robust Redis client
 const redis = new Redis(REDIS_PORT, REDIS_HOST, {
   connectTimeout: 2000,
-  retryStrategy: (times) => Math.min(200 * times, 2000) // 200ms .. 2s
+  retryStrategy: (times) => Math.min(200 * times, 2000),
 });
 
-// URL validation
+// Helpers
 function isValidUrl(u) {
   try {
     const x = new URL(u);
@@ -44,37 +37,54 @@ function isValidUrl(u) {
   }
 }
 
-// Random base62 code
-function genCode(n = 6) {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let s = '';
-  while (s.length < n) s += letters[crypto.randomInt(0, letters.length)];
-  return s;
-}
-
-// Allocate a unique code atomically; retry a few times if collision occurs
-async function saveWithRetry(url, maxTries = 5) {
-  for (let i = 0; i < maxTries; i++) {
-    const code = genCode(6);
-    // SET key value NX EX TTL_SECONDS  => only if not exists + TTL 24h
-    const ok = await redis.set(code, url, 'NX', 'EX', TTL_SECONDS);
-    if (ok === 'OK') return code; // unique reservation succeeded
+// Deterministic 6-char code from SHA-256 hex digest.
+// Collision handling: slide a 6-char window along the hash until we find a free slot
+// or a slot already holding the same URL.
+async function codeFromSha(url, maxWindows = 16) {
+  const hashHex = crypto.createHash('sha256').update(url).digest('hex'); // 64 hex chars
+  for (let i = 0; i <= hashHex.length - 6 && i < maxWindows; i++) {
+    const code = hashHex.substring(i, i + 6); // e.g., "a1b2c3"
+    const existing = await redis.get(code);
+    if (!existing) {
+      // Reserve with TTL
+      const ok = await redis.set(code, url, 'NX', 'EX', TTL_SECONDS);
+      if (ok === 'OK') return code;
+      // Rare race: someone just claimed it; retry next window
+    } else if (existing === url) {
+      // Same mapping already present — refresh TTL and return
+      await redis.expire(code, TTL_SECONDS);
+      return code;
+    }
+    // else: collision with a different URL, try next window
   }
-  throw new Error('Could not allocate unique code after retries');
+  // Fallback: append a tiny salt and try again (still deterministic per URL+salt)
+  for (let salt = 1; salt <= 100; salt++) {
+    const h = crypto.createHash('sha256').update(url + '#' + salt).digest('hex');
+    const code = h.substring(0, 6);
+    const existing = await redis.get(code);
+    if (!existing) {
+      const ok = await redis.set(code, url, 'NX', 'EX', TTL_SECONDS);
+      if (ok === 'OK') return code;
+    } else if (existing === url) {
+      await redis.expire(code, TTL_SECONDS);
+      return code;
+    }
+  }
+  throw new Error('Could not allocate unique code (hash collisions).');
 }
 
-// Create short URL
+// Routes
 app.post('/shorten', async (req, res) => {
   const { url } = req.body || {};
   if (!url || !isValidUrl(url)) {
     return res.status(400).json({ error: 'Invalid URL format' });
   }
   try {
-    const code = await saveWithRetry(url, 5);
+    const code = await codeFromSha(url);
     return res.status(201).json({
       short_url: `http://${BASE_DOMAIN}/${code}`,
       original_url: url,
-      code
+      code,
     });
   } catch (e) {
     console.error(e);
@@ -82,7 +92,6 @@ app.post('/shorten', async (req, res) => {
   }
 });
 
-// Redirect by code
 app.get('/:code', async (req, res) => {
   const { code } = req.params;
   try {
@@ -96,31 +105,17 @@ app.get('/:code', async (req, res) => {
   }
 });
 
-// Health endpoints
-app.get('/', async (_req, res) => {
-  try {
-    await redis.ping();
-    return res.json({
-      status: 'healthy',
-      redis: 'connected',
-      version: '1.0',
-      domain: BASE_DOMAIN
-    });
-  } catch (e) {
-    return res.status(500).json({ status: 'unhealthy', error: String(e) });
-  }
-});
-
+// Health
 app.get('/healthz', async (_req, res) => {
-  try {
-    await redis.ping();
-    return res.send('OK');
-  } catch {
-    return res.status(503).send('Redis unavailable');
-  }
+  try { await redis.ping(); return res.send('OK'); }
+  catch { return res.status(503).send('Redis unavailable'); }
 });
 
-// Start server
+app.get('/', async (_req, res) => {
+  try { await redis.ping(); return res.json({ status: 'healthy', redis: 'connected', version: '1.0', domain: BASE_DOMAIN }); }
+  catch (e) { return res.status(500).json({ status: 'unhealthy', error: String(e) }); }
+});
+
 const PORT = Number(process.env.PORT || 3000);
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Express server listening on http://0.0.0.0:${PORT}`);
