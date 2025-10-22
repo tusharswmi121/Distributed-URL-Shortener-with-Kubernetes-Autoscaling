@@ -4,12 +4,12 @@ It runs locally with Docker Compose and can run in a cluster with Kubernetes (Se
 
 ✨ Features
 
-POST /shorten → returns { short_url, original_url, code } (stored for 24h)
+a) POST /shorten → returns { short_url, original_url, code } (stored for 24h)<br>
+b)GET /:code → 302 redirect to the original URL + click counter<br>
+c) Health: /healthz (OK for probes), / (JSON status)<br>
 
-GET /:code → 302 redirect to the original URL + click counter
 
-Health: /healthz (OK for probes), / (JSON status)
-
+📂 Project Structure
 .
 ├── server.js
 ├── Dockerfile
@@ -48,10 +48,7 @@ GET /:code
 
 📝 Notes
 
-In Compose, the app talks to Redis at redis:6379.
-
-In K8s, the app talks to Redis at redis-service:6379 (from ConfigMap).
-
-The default TTL is 24h; clicks are tracked with INCR clicks:<code>.
-
-stress.js can send many concurrent requests to test performance/autoscaling.
+a) In Compose, the app talks to Redis at redis:6379.<br>
+b) In K8s, the app talks to Redis at redis-service:6379 (from ConfigMap).<br>
+c) The default TTL is 24h; clicks are tracked with INCR clicks:<code>.<br>
+d) stress.js can send many concurrent requests to test performance/autoscaling.<br>
