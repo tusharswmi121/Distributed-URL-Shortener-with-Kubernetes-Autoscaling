@@ -2,13 +2,15 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: web-deployment
+  labels:
+    app: web
 spec:
   replicas: 3
   strategy:
+    type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
-    type: RollingUpdate
   selector:
     matchLabels:
       app: web
@@ -18,44 +20,44 @@ spec:
         app: web
     spec:
       containers:
-      - name: web
-        image: url-shortener_web:latest
-        imagePullPolicy: Never
-        ports:
-        - containerPort: 5000
-        envFrom:
-        - configMapRef:
-            name: app-config
-        - secretRef:
-            name: app-secrets
-        resources:
-          requests:
-            cpu: "100m"
-            memory: "128Mi"
-          limits:
-            cpu: "200m"
-            memory: "256Mi"
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 5000
-          initialDelaySeconds: 20  # Give more time for Flask to initialize
-          periodSeconds: 20
-          timeoutSeconds: 2
-          successThreshold: 1
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /healthz
-            port: 5000
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 2
-          successThreshold: 1
-          failureThreshold: 3
-        startupProbe:
-          httpGet:
-            path: /healthz
-            port: 5000
-          failureThreshold: 30  # Allow up to 5 minutes for startup (30*10s)
-          periodSeconds: 10
+        - name: web
+          image: url-shortener_node:latest   # built inside minikube Docker
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000            # Node server port
+          envFrom:
+            - configMapRef:
+                name: app-config             # provides REDIS_HOST/REDIS_PORT
+            - secretRef:
+                name: app-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            failureThreshold: 30   # up to 5 minutes (30*10s)
+            periodSeconds: 10

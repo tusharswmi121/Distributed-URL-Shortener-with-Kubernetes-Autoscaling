@@ -3,8 +3,6 @@ kind: Ingress
 metadata:
   name: url-shortener-ingress
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
-    nginx.ingress.kubernetes.io/load-balance: "round_robin"
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-methods: "POST, GET, OPTIONS"
@@ -14,15 +12,19 @@ spec:
   - host: short.ly
     http:
       paths:
+      # Exact match for POST /shorten (no regex, keep Exact)
       - path: /shorten
-        pathType: Exact  # Critical for POST requests
+        pathType: Exact
         backend:
           service:
             name: web-service
             port:
               number: 80
-      - path: /([a-zA-Z0-9]+)
-        pathType: Prefix  # For short code redirects
+
+      # Regex match for GET /<code> (letters+digits)
+      # NOTE: regex paths MUST use ImplementationSpecific
+      - path: /([A-Za-z0-9]+)
+        pathType: ImplementationSpecific
         backend:
           service:
             name: web-service

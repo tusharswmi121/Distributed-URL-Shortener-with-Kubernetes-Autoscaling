@@ -1,13 +1,14 @@
-# kubernetes/services/web-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: web-service
+  labels:
+    app: web
 spec:
   type: LoadBalancer
   selector:
     app: web
   ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 5000
+    - protocol: TCP
+      port: 80
+      targetPort: 3000   # Node container port

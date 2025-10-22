@@ -1,11 +1,14 @@
 # Dockerfile
-FROM python:3.9-slim
+FROM node:20-alpine
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Only copy package files first for better layer caching
+COPY package*.json ./
+RUN npm ci --omit=dev
 
+# Now copy the rest (server.js, kubernetes/, etc.)
 COPY . .
 
-CMD ["python", "app.py"]
+EXPOSE 3000
+CMD ["npm", "start"]
