@@ -2,14 +2,14 @@
 A small web service that takes a long URL, makes a short code (6 letters/digits), saves it in Redis, and later redirects you when you visit /<code>.
 It runs locally with Docker Compose and can run in a cluster with Kubernetes (Service, Ingress, HPA autoscaling).
 
-#✨ Features
+# ✨ Features
 
 a) POST /shorten → returns { short_url, original_url, code } (stored for 24h)<br>
 b) GET /:code → 302 redirect to the original URL + click counter<br>
 c) Health: /healthz (OK for probes), / (JSON status)<br>
 
 
-#📂 Project Structure
+# 📂 Project Structure
 .
 ├── server.js
 ├── Dockerfile
@@ -33,7 +33,7 @@ c) Health: /healthz (OK for probes), / (JSON status)<br>
         └── web-hpa.yaml
 
 
-#🧩 API (very quick)
+# 🧩 API (very quick)
 POST /shorten
 
 Body:
@@ -46,7 +46,7 @@ GET /:code
 
 ➡️ 302 redirect to the original URL.
 
-#📝 Notes
+# 📝 Notes
 
 a) In Compose, the app talks to Redis at redis:6379.<br>
 b) In K8s, the app talks to Redis at redis-service:6379 (from ConfigMap).<br>
