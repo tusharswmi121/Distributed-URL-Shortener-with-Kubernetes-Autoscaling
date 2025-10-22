@@ -1,67 +1,56 @@
-# Distributed URL Shortener with Kubernetes Autoscaling — Node.js + Express + Redis (Docker + Kubernetes)
+Distributed URL Shortener (Node.js + Express + Redis • Docker + Kubernetes)
 
-A simple, cloud-ready URL shortener. It creates **random 6-character codes** for long URLs, stores them in **Redis**, and redirects on `GET /:code`. Containerized with **Docker** and deployable to **Kubernetes** (Service, Ingress, HPA).
+What this is (plain English):
+A small web service that takes a long URL, makes a short code (6 letters/digits), saves it in Redis, and later redirects you when you visit /<code>.
+It runs locally with Docker Compose and can run in a cluster with Kubernetes (Service, Ingress, HPA autoscaling).
 
-## Features
-- `POST /shorten` → `{ short_url, original_url, code }` (24h TTL)
-- `GET /:code` → 302 redirect + click counter
-- Health: `/healthz` (OK), `/` (JSON status)
-- Docker Compose for local dev; K8s manifests for cluster
-- HPA demo (CPU target 50%, min 2, max 10)
+Features
 
-## Project Structure
+POST /shorten → returns { short_url, original_url, code } (stored for 24h)
+
+GET /:code → 302 redirect to the original URL + click counter
+
+Health: /healthz (OK for probes), / (JSON status)
+
 .
 ├── server.js
 ├── Dockerfile
 ├── docker-compose.yml
 ├── package.json
+├── package-lock.json
 ├── stress.js
 └── kubernetes/
-├── configs/ (config-map.yaml, secrets.yaml)
-├── deployments/ (web-deployment.yaml, redis-deployment.yaml)
-├── services/ (web-service.yaml, redis-service.yaml)
-├── ingress/ (ingress.yaml)
-└── hpa/ (web-hpa.yaml)
+    ├── configs/
+    │   ├── config-map.yaml
+    │   └── secrets.yaml
+    ├── deployments/
+    │   ├── web-deployment.yaml
+    │   └── redis-deployment.yaml
+    ├── services/
+    │   ├── web-service.yaml
+    │   └── redis-service.yaml
+    ├── ingress/
+    │   └── ingress.yaml
+    └── hpa/
+        └── web-hpa.yaml
 
 
-Run Locally (Docker Compose)
-## Quick Start (Docker Compose)
-```bash
-docker compose up --build
-# Health
-curl -sS http://localhost:3000/healthz
-# Shorten a URL
-curl -sS -X POST -H 'Content-Type: application/json' \
-  -d '{"url":"https://example.com"}' \
-  http://localhost:3000/shorten
-# Follow the code (replace CODE)
-curl -i http://localhost:3000/CODE
 
-Run on Kubernetes (Minikube)
+API (very quick)
 
-minikube start
-eval $(minikube docker-env)
-docker build -t url-shortener_node:latest .
+POST /shorten
+Body: { "url": "<long-url>" }
+Response: { "short_url": "http://short.ly/Ab3XyZ", "original_url": "...", "code": "Ab3XyZ" }
 
-kubectl apply -f kubernetes/configs/
-kubectl apply -f kubernetes/deployments/
-kubectl apply -f kubernetes/services/
-kubectl apply -f kubernetes/hpa/
-
-# Access via port-forward
-kubectl port-forward svc/web-service 8081:80
-curl -sS http://127.0.0.1:8081/healthz
-
-API
-
-POST /shorten → { "url": "<long-url>" } ⇒ { short_url, original_url, code }
-
-GET /:code → 302 redirect
+GET /:code
+302 redirect to the original URL.
 
 Notes
 
-In Kubernetes, the app talks to Redis at redis-service:6379 (via ConfigMap).
+In Compose, the app talks to Redis at redis:6379.
 
-HPA scales web pods between 2–10 based on 50% CPU (requires metrics-server).
+In K8s, the app talks to Redis at redis-service:6379 (from ConfigMap).
 
-stress.js can send concurrent requests to test performance/autoscaling.
+The default TTL is 24h; clicks are tracked with INCR clicks:<code>.
+
+stress.js can send many concurrent requests to test performance/autoscaling.
