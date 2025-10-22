@@ -1,4 +1,4 @@
-📦 Distributed URL Shortener (Node.js + Express + Redis • Docker + Kubernetes)
+# 🛰️ Distributed URL Shortener (Node.js + Express + Redis • Docker + Kubernetes)<br>
 A small web service that takes a long URL, makes a short code (6 letters/digits), saves it in Redis, and later redirects you when you visit /<code>.
 It runs locally with Docker Compose and can run in a cluster with Kubernetes (Service, Ingress, HPA autoscaling).
 
