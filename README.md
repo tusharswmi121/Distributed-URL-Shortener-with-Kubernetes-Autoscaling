@@ -59,8 +59,8 @@ Response:
 ```
 #📝 Notes
 
-In Docker Compose, the app connects to redis:6379
-In Kubernetes, it connects to redis-service:6379 (set in ConfigMap)
-Data TTL: 24 hours in Redis, permanent storage in MySQL
-Click counts tracked via INCR clicks:<code> in Redis
-Use stress.js to simulate concurrent load and observe autoscaling
+In Docker Compose, the app connects to redis:6379<br/>
+In Kubernetes, it connects to redis-service:6379 (set in ConfigMap)<br/>
+Data TTL: 24 hours in Redis, permanent storage in MySQL<br/>
+Click counts tracked via INCR clicks:<code> in Redis<br/>
+Use stress.js to simulate concurrent load and observe autoscaling<br/>
