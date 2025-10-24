@@ -1,54 +1,70 @@
-# 🛰️ Distributed URL Shortener (Node.js + Express + Redis • Docker + Kubernetes)<br>
-A small web service that takes a long URL, makes a short code (6 letters/digits), saves it in Redis, and later redirects you when you visit /<code>.
-It runs locally with Docker Compose and can run in a cluster with Kubernetes (Service, Ingress, HPA autoscaling).
+# 🛰️ Distributed URL Shortener (Node.js + Express + Redis • Docker + Kubernetes)
 
-# ✨ Features
+A scalable URL shortening service that converts long URLs into unique 6-character short codes using **SHA-256 hashing**.  
+Each mapping is stored temporarily in **Redis** for fast lookup (24-hour TTL) and permanently in **MySQL** for persistence.  
+The app runs locally using **Docker Compose** and supports autoscaling in **Kubernetes** (via HPA).
 
-a) POST /shorten → returns { short_url, original_url, code } (stored for 24h)<br>
-b) GET /:code → 302 redirect to the original URL + click counter<br>
-c) Health: /healthz (OK for probes), / (JSON status)<br>
+---
 
+## ✨ Features
 
-# 📂 Project Structure
+- **POST /shorten** → returns `{ short_url, original_url, code }` (stored for 24h)  
+- **GET /:code** → redirects to the original long URL (302) and increments click count  
+- **/healthz** → returns service status for probes and monitoring  
+- **Automatic scaling** → Kubernetes HPA scales Node.js pods based on load  
+- **Stress testing** → `stress.js` sends multiple concurrent requests to simulate real-world traffic  
+
+---
+
+## 📂 Project Structure
 .
-├── server.js
-├── Dockerfile
-├── docker-compose.yml
-├── package.json
+├── server.js # Main Node.js + Express app
+├── Dockerfile # Image build instructions
+├── docker-compose.yml # Local environment (Web + Redis + MySQL)
+├── package.json # Dependencies and scripts
 ├── package-lock.json
-├── stress.js
-└── kubernetes/
-    ├── configs/
-    │   ├── config-map.yaml
-    │   └── secrets.yaml
-    ├── deployments/
-    │   ├── web-deployment.yaml
-    │   └── redis-deployment.yaml
-    ├── services/
-    │   ├── web-service.yaml
-    │   └── redis-service.yaml
-    ├── ingress/
-    │   └── ingress.yaml
-    └── hpa/
-        └── web-hpa.yaml
+├── stress.js # Load testing script
+├── schema.sql # SQL schema for MySQL table
+└── kubernetes/ # Kubernetes manifests
+├── configs/
+│ ├── config-map.yaml
+│ └── secrets.yaml
+├── deployments/
+│ ├── web-deployment.yaml
+│ └── redis-deployment.yaml
+├── services/
+│ ├── web-service.yaml
+│ └── redis-service.yaml
+├── ingress/
+│ └── ingress.yaml
+└── hpa/
+└── web-hpa.yaml
 
 
-# 🧩 API (very quick)
-POST /shorten
+---
 
-Body:
-{ "url": "<long-url>" }
+## 🧩 API Reference
+
+### **POST /shorten**
+**Body:**
+json
+{ "url": "https://example.com" }
 
 Response:
-{ "short_url": "http://short.ly/Ab3XyZ", "original_url": "...", "code": "Ab3XyZ" }
+{
+  "short_url": "http://short.ly/Ab3XyZ",
+  "original_url": "https://example.com",
+  "code": "Ab3XyZ"
+}
 
-GET /:code
+#📝 Notes
 
-➡️ 302 redirect to the original URL.
+In Docker Compose, the app connects to redis:6379
 
-# 📝 Notes
+In Kubernetes, it connects to redis-service:6379 (set in ConfigMap)
 
-a) In Compose, the app talks to Redis at redis:6379.<br>
-b) In K8s, the app talks to Redis at redis-service:6379 (from ConfigMap).<br>
-c) The default TTL is 24h; clicks are tracked with INCR clicks:<code>.<br>
-d) stress.js can send many concurrent requests to test performance/autoscaling.<br>
+Data TTL: 24 hours in Redis, permanent storage in MySQL
+
+Click counts tracked via INCR clicks:<code> in Redis
+
+Use stress.js to simulate concurrent load and observe autoscaling
