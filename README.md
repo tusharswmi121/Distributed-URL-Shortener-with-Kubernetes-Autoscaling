@@ -15,8 +15,8 @@ The app runs locally using **Docker Compose** and supports autoscaling in **Kube
 - **Stress testing** → `stress.js` sends multiple concurrent requests to simulate real-world traffic  
 
 ---
-
 ## 📂 Project Structure
+
 .
 ├── server.js # Main Node.js + Express app
 ├── Dockerfile # Image build instructions
@@ -39,7 +39,6 @@ The app runs locally using **Docker Compose** and supports autoscaling in **Kube
 │ └── ingress.yaml
 └── hpa/
 └── web-hpa.yaml
-
 
 ---
 
