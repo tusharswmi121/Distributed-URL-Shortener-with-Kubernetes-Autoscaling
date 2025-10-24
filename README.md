@@ -46,6 +46,7 @@ The app runs locally using **Docker Compose** and supports autoscaling in **Kube
 
 ### **POST /shorten**
 **Body:**
+```
 json
 { "url": "https://example.com" }
 
@@ -55,15 +56,11 @@ Response:
   "original_url": "https://example.com",
   "code": "Ab3XyZ"
 }
-
+```
 #📝 Notes
 
 In Docker Compose, the app connects to redis:6379
-
 In Kubernetes, it connects to redis-service:6379 (set in ConfigMap)
-
 Data TTL: 24 hours in Redis, permanent storage in MySQL
-
 Click counts tracked via INCR clicks:<code> in Redis
-
 Use stress.js to simulate concurrent load and observe autoscaling
