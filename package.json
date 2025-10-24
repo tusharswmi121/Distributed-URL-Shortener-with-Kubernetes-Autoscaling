@@ -1,5 +1,5 @@
 {
-  "name": "k8s-powered-url-shortener",
+  "name": "distributed-url-shortener",
   "version": "1.0.0",
   "type": "module",
   "main": "server.js",
@@ -7,9 +7,9 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^5.1.0",
-    "fastify": "^4.28.1",
+    "express": "^4.19.2",
     "ioredis": "^5.8.2",
-    "node-fetch": "^3.3.2"
+    "mysql2": "^3.9.7",
+    "crypto": "^1.0.1"
   }
 }

@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS urls (
+  code VARCHAR(16) PRIMARY KEY,
+  long_url TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  clicks BIGINT DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_urls_long_url ON urls (long_url(255));

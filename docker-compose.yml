@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   web:
@@ -7,9 +7,16 @@ services:
       - "3000:3000"
     depends_on:
       - redis
+      - mysql
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MYSQL_HOST: mysql
+      MYSQL_USER: urluser
+      MYSQL_PASSWORD: urlpass
+      MYSQL_DATABASE: urlshort
+      BASE_DOMAIN: short.ly
+      TTL_SECONDS: 86400
 
   redis:
     image: redis:alpine
@@ -18,5 +25,19 @@ services:
     volumes:
       - redis_data:/data
 
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: urlshort
+      MYSQL_USER: urluser
+      MYSQL_PASSWORD: urlpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
 volumes:
   redis_data:
+  mysql_data:
