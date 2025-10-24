@@ -16,9 +16,9 @@ The app runs locally using **Docker Compose** and supports autoscaling in **Kube
 
 ---
 ## 📂 Project Structure
-
+```
 .
-├── server.js # Main Node.js + Express app ..
+├── server.js # Main Node.js + Express app 
 ├── Dockerfile # Image build instructions
 ├── docker-compose.yml # Local environment (Web + Redis + MySQL)
 ├── package.json # Dependencies and scripts
@@ -39,7 +39,7 @@ The app runs locally using **Docker Compose** and supports autoscaling in **Kube
 │ └── ingress.yaml
 └── hpa/
 └── web-hpa.yaml
-
+```
 ---
 
 ## 🧩 API Reference
